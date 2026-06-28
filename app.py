@@ -8,7 +8,7 @@ from session_ingestion.session_ingestion import process_uploaded_pdfs
 from session_retrieval.session_retrieval import build_session_retriever, delete_session_collection
 from session_answer_generation.chat_generation import build_rag_chain, answer_question
 
-st.set_page_config(page_title="AskMe", page_icon="📄", layout="centered")
+st.set_page_config(page_title="ShikkhaBondhu", page_icon="📄", layout="centered")
 
 st.title("ShikkhaBondhu")
 st.caption(
