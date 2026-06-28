@@ -5,7 +5,7 @@ from langchain_huggingface import HuggingFaceEmbeddings
 from langchain_community.retrievers import BM25Retriever
 from langchain_classic.retrievers import EnsembleRetriever
 
-from ShikkhaBondhu.configs import EMBEDDING_MODEL_NAME, GENERATION_TOP_K, CHROMA_COLLECTION_NAME
+from configs import EMBEDDING_MODEL_NAME, GENERATION_TOP_K, CHROMA_COLLECTION_NAME
 
 
 def build_session_retriever(documents):
