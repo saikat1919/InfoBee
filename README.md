@@ -32,3 +32,6 @@ session ends.
 See `.env.example`. You'll need:
 - `HF_TOKEN` - Hugging Face access token (read scope is sufficient)
 - `GEMINI_API_KEY` - Gemini API key if using Gemini model.
+
+## 🌐 Live Demo
+👉 https://huggingface.co/spaces/saikat007/ShikkhaBondhu
