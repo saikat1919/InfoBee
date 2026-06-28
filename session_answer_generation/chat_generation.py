@@ -1,13 +1,12 @@
+import os
+
 from langchain_core.prompts import ChatPromptTemplate, MessagesPlaceholder
 from langchain_classic.chains import create_history_aware_retriever, create_retrieval_chain
 from langchain_classic.chains.combine_documents import create_stuff_documents_chain
 from langchain_huggingface import ChatHuggingFace, HuggingFaceEndpoint
+from langchain_google_genai import ChatGoogleGenerativeAI
 
-from configs import GENERATION_MODEL_NAME
-
-from dotenv import load_dotenv
-
-load_dotenv()
+from configs import GENERATION_MODEL_NAME, FALLBACK_MODEL_NAME
 
 
 CONTEXTUALIZE_SYSTEM_PROMPT = """Given a chat history and the latest user question, \
@@ -41,13 +40,22 @@ answer_prompt = ChatPromptTemplate.from_messages([
 
 
 def build_rag_chain(retriever):
-    llm = HuggingFaceEndpoint(
+    hf_llm = HuggingFaceEndpoint(
         repo_id=GENERATION_MODEL_NAME,
+        provider="hf-inference",
         task="text-generation",
         max_new_tokens=512,
         do_sample=False,
     )
-    model = ChatHuggingFace(llm=llm)
+    primary_model = ChatHuggingFace(llm=hf_llm)
+    fallback_model = ChatGoogleGenerativeAI(
+        model=FALLBACK_MODEL_NAME,
+        google_api_key=os.environ.get("GEMINI_API_KEY"),
+        temperature=0,
+        max_output_tokens=512,
+    )
+
+    model = primary_model.with_fallbacks([fallback_model])
 
     history_aware_retriever = create_history_aware_retriever(
         model, retriever, contextualize_prompt

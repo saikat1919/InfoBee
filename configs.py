@@ -5,7 +5,8 @@ EMBEDDING_MODEL_NAME = "sentence-transformers/all-MiniLM-L6-v2"
 CHUNK_SIZE = 700
 CHUNK_OVERLAP = 200
 
-GENERATION_MODEL_NAME = "meta-llama/Llama-3.3-70B-Instruct"
+GENERATION_MODEL_NAME = "meta-llama/Meta-Llama-3-8B-Instruct"
+FALLBACK_MODEL_NAME = "gemini-2.5-flash"
 
 GENERATION_TOP_K = 10
 

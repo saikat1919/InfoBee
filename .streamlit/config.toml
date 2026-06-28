@@ -1,6 +1,4 @@
-[
-server
-]
+[server]
 enableXsrfProtection = false
 enableCORS = false
 fileWatcherType = "none"
