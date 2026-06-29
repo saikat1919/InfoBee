@@ -7,6 +7,7 @@ from langchain_core.messages import HumanMessage, AIMessage
 from session_ingestion.session_ingestion import process_uploaded_pdfs
 from session_retrieval.session_retrieval import build_session_retriever, delete_session_collection
 from session_answer_generation.chat_generation import build_rag_chain, answer_question
+from session_query_routing.intent_classification import QueryIntent
 
 st.set_page_config(page_title="ShikkhaBondhu", page_icon="📄", layout="centered")
 
@@ -17,14 +18,16 @@ st.caption(
     "saved once you close or refresh the page."
 )
 
-if "rag_chain" not in st.session_state:
-    st.session_state.rag_chain = None
+if "rag_chains" not in st.session_state:
+    st.session_state.rag_chains = None
 if "vector_store" not in st.session_state:
     st.session_state.vector_store = None
 if "chat_history" not in st.session_state:
     st.session_state.chat_history = []
 if "processed_filenames" not in st.session_state:
     st.session_state.processed_filenames = []
+if "display_history" not in st.session_state:
+    st.session_state.display_history = []
 
 MAX_TURNS = 10
 
@@ -55,8 +58,9 @@ with st.sidebar:
 
                     retriever, vector_store = build_session_retriever(documents)
                     st.session_state.vector_store = vector_store
-                    st.session_state.rag_chain = build_rag_chain(retriever)
+                    st.session_state.rag_chains = build_rag_chain(retriever)
                     st.session_state.chat_history = []
+                    st.session_state.display_history = []
                     st.session_state.processed_filenames = [f.name for f in uploaded_files]
                     st.success(f"Indexed {len(documents)} chunks from {len(uploaded_files)} file(s).")
             except Exception as e:
@@ -71,19 +75,27 @@ with st.sidebar:
 
         if st.button("Clear session"):
             delete_session_collection(st.session_state.vector_store)
-            st.session_state.rag_chain = None
+            st.session_state.rag_chains = None
             st.session_state.vector_store = None
             st.session_state.chat_history = []
+            st.session_state.display_history = []
             st.session_state.processed_filenames = []
             st.rerun()
 
-if st.session_state.rag_chain is None:
+INTENT_BADGE = {
+    QueryIntent.FACTUAL: "🔎 Factual lookup",
+    QueryIntent.EXPLAIN: "💡 Explanation",
+}
+
+if st.session_state.rag_chains is None:
     st.info("Upload one or more PDFs and click **Process documents** to get started.")
 else:
-    for msg in st.session_state.chat_history:
-        role = "user" if isinstance(msg, HumanMessage) else "assistant"
+    for entry in st.session_state.display_history:
+        role, content, intent = entry["role"], entry["content"], entry.get("intent")
         with st.chat_message(role):
-            st.markdown(msg.content)
+            if intent is not None:
+                st.caption(INTENT_BADGE.get(intent, ""))
+            st.markdown(content)
 
     query = st.chat_input("Ask a question about your document(s)...")
 
@@ -94,17 +106,24 @@ else:
         with st.chat_message("assistant"):
             with st.spinner("Thinking..."):
                 try:
-                    answer = answer_question(
-                        st.session_state.rag_chain,
+                    answer, intent = answer_question(
+                        st.session_state.rag_chains,
                         query,
                         st.session_state.chat_history,
                     )
                 except Exception as e:
                     answer = f"Sorry, something went wrong while generating an answer: {e}"
+                    intent = None
+                if intent is not None:
+                    st.caption(INTENT_BADGE.get(intent, ""))
                 st.markdown(answer)
 
         st.session_state.chat_history.append(HumanMessage(content=query))
         st.session_state.chat_history.append(AIMessage(content=answer))
 
+        st.session_state.display_history.append({"role": "user", "content": query, "intent": None})
+        st.session_state.display_history.append({"role": "assistant", "content": answer, "intent": intent})
+
         if len(st.session_state.chat_history) > MAX_TURNS * 2:
             st.session_state.chat_history = st.session_state.chat_history[-MAX_TURNS * 2:]
+            st.session_state.display_history = st.session_state.display_history[-MAX_TURNS * 2:]
