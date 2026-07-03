@@ -2,8 +2,6 @@ import re
 from enum import Enum
 
 from langchain_core.prompts import ChatPromptTemplate
-from langchain_huggingface import ChatHuggingFace, HuggingFaceEndpoint
-from langchain_google_genai import ChatGoogleGenerativeAI
 from langchain_groq import ChatGroq
 
 from configs import INTENT_CLASSIFIER_MODEL_NAME, INTENT_CLASSIFIER_FALLBACK_MODEL_NAME
@@ -68,14 +66,12 @@ _classifier_model = None
 def _get_classifier_model():
     global _classifier_model
     if _classifier_model is None:
-        hf_llm = HuggingFaceEndpoint(
-            repo_id=INTENT_CLASSIFIER_MODEL_NAME,
-            provider="auto",
-            task="text-generation",
-            max_new_tokens=4,
-            do_sample=False,
+        intent_classifier = ChatGroq(
+            model=INTENT_CLASSIFIER_MODEL_NAME,
+            temperature=0,
+            max_tokens=4,
         )
-        primary = ChatHuggingFace(llm=hf_llm)
+        primary = intent_classifier
 
         fallback = ChatGroq(
             model=INTENT_CLASSIFIER_FALLBACK_MODEL_NAME,

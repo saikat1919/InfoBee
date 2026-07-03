@@ -6,7 +6,7 @@ from langchain_classic.chains.combine_documents import create_stuff_documents_ch
 from langchain_groq import ChatGroq
 from dotenv import load_dotenv
 
-from configs import GROQ_PRIMARY_MODEL_NAME, GROQ_FALLBACK_MODEL1, GROQ_FALLBACK_MODEL2, GROQ_FALLBACK_MODEL3
+from configs import GROQ_PRIMARY_MODEL_NAME, GROQ_FALLBACK_MODEL1, GROQ_FALLBACK_MODEL2
 from session_query_routing.intent_classification import classify_intent, QueryIntent
 
 load_dotenv()
@@ -86,17 +86,11 @@ def _build_model():
         max_tokens=512
     )
 
-    fallback_model_3 = ChatGroq(
-        model=GROQ_FALLBACK_MODEL3,
-        temperature=0.4,
-        max_tokens=512
-    )
 
     tiers = [
         ("Groq_Primary", GROQ_PRIMARY_MODEL_NAME, primary_model),
         ("Groq_Fallback_1", GROQ_FALLBACK_MODEL1, fallback_model_1),
         ("Groq_Fallback_2", GROQ_FALLBACK_MODEL2, fallback_model_2),
-        ("Groq_Fallback_3", GROQ_FALLBACK_MODEL3, fallback_model_3)
     ]
 
     def _invoke_with_logged_tiers(messages, **kwargs):
