@@ -54,7 +54,19 @@ def normalize_whitespace(text):
     return text.strip()
 
 
+_NUMERIC_CELL = re.compile(r"-?\d+(\.\d+)?%?")
+
+
+def _row_looks_like_header(row):
+    cells = [str(c).strip() for c in row]
+    if not cells:
+        return False
+    numeric = sum(1 for c in cells if _NUMERIC_CELL.fullmatch(c))
+    return numeric <= len(cells) / 2
+
+
 def format_table_as_markdown(df):
+
     def clean_cell(value):
         text = str(value).strip().replace("\n", " ")
         return text.replace("|", "\\|")
@@ -63,7 +75,12 @@ def format_table_as_markdown(df):
     if not rows:
         return ""
 
-    header, body = rows[0], rows[1:]
+    if _row_looks_like_header(rows[0]):
+        header, body = rows[0], rows[1:]
+    else:
+        header = [f"Column {i + 1}" for i in range(len(rows[0]))]
+        body = rows
+
     lines = [
         "| " + " | ".join(clean_cell(c) for c in header) + " |",
         "|" + "|".join(["---"] * len(header)) + "|",
@@ -73,7 +90,6 @@ def format_table_as_markdown(df):
 
 
 def dedupe_text_against_tables(items, overlap_threshold=None):
-
     if overlap_threshold is None:
         overlap_threshold = TABLE_DEDUP_OVERLAP_THRESHOLD
 
