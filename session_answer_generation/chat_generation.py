@@ -1,15 +1,15 @@
-import os
 import logging
 from langchain_core.prompts import ChatPromptTemplate, MessagesPlaceholder
 from langchain_core.runnables import RunnableLambda
 from langchain_classic.chains import create_history_aware_retriever, create_retrieval_chain
 from langchain_classic.chains.combine_documents import create_stuff_documents_chain
-from langchain_huggingface import ChatHuggingFace, HuggingFaceEndpoint
-from langchain_google_genai import ChatGoogleGenerativeAI
 from langchain_groq import ChatGroq
+from dotenv import load_dotenv
 
-from configs import GENERATION_MODEL_NAME, GEMINI_FALLBACK_MODEL_NAME, GROQ_FALLBACK_MODEL_NAME
+from configs import GROQ_PRIMARY_MODEL_NAME, GROQ_FALLBACK_MODEL1, GROQ_FALLBACK_MODEL2, GROQ_FALLBACK_MODEL3
 from session_query_routing.intent_classification import classify_intent, QueryIntent
+
+load_dotenv()
 
 logger = logging.getLogger(__name__)
 logging.basicConfig(level=logging.INFO)
@@ -66,32 +66,37 @@ explain_prompt = ChatPromptTemplate.from_messages([
 
 
 def _build_model():
-    hf_llm = HuggingFaceEndpoint(
-        repo_id=GENERATION_MODEL_NAME,
-        provider="auto",
-        task="text-generation",
-        max_new_tokens=512,
-        do_sample=False,
-    )
-    primary_model = ChatHuggingFace(llm=hf_llm)
-
-    groq_fallback_model = ChatGroq(
-        model=GROQ_FALLBACK_MODEL_NAME,
+    groq_primary_model = ChatGroq(
+        model=GROQ_PRIMARY_MODEL_NAME,
         temperature=0.4,
         max_tokens=512
     )
 
-    gemini_fallback_model = ChatGoogleGenerativeAI(
-        model=GEMINI_FALLBACK_MODEL_NAME,
-        google_api_key=os.environ.get("GEMINI_API_KEY"),
+    primary_model = groq_primary_model
+
+    fallback_model_1 = ChatGroq(
+        model=GROQ_FALLBACK_MODEL1,
         temperature=0.4,
-        max_output_tokens=512,
+        max_tokens=512
+    )
+
+    fallback_model_2 = ChatGroq(
+        model=GROQ_FALLBACK_MODEL2,
+        temperature=0.4,
+        max_tokens=512
+    )
+
+    fallback_model_3 = ChatGroq(
+        model=GROQ_FALLBACK_MODEL3,
+        temperature=0.4,
+        max_tokens=512
     )
 
     tiers = [
-        ("HF", GENERATION_MODEL_NAME, primary_model),
-        ("Groq", GROQ_FALLBACK_MODEL_NAME, groq_fallback_model),
-        ("Gemini", GEMINI_FALLBACK_MODEL_NAME, gemini_fallback_model),
+        ("Groq_Primary", GROQ_PRIMARY_MODEL_NAME, primary_model),
+        ("Groq_Fallback_1", GROQ_FALLBACK_MODEL1, fallback_model_1),
+        ("Groq_Fallback_2", GROQ_FALLBACK_MODEL2, fallback_model_2),
+        ("Groq_Fallback_3", GROQ_FALLBACK_MODEL3, fallback_model_3)
     ]
 
     def _invoke_with_logged_tiers(messages, **kwargs):

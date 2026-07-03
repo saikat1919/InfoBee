@@ -5,9 +5,10 @@ EMBEDDING_MODEL_NAME = "sentence-transformers/all-MiniLM-L6-v2"
 CHUNK_SIZE = 700
 CHUNK_OVERLAP = 200
 
-GENERATION_MODEL_NAME = "meta-llama/Meta-Llama-3-8B-Instruct"
-GEMINI_FALLBACK_MODEL_NAME = "gemini-2.5-flash"
-GROQ_FALLBACK_MODEL_NAME = "llama-3.3-70b-versatile"
+GROQ_PRIMARY_MODEL_NAME = "llama-3.3-70b-versatile"
+GROQ_FALLBACK_MODEL1 = "llama-3.1-8b-instant"
+GROQ_FALLBACK_MODEL2 = "llama-4-scout-17b-16e-instruct" #Large context and reasoning
+GROQ_FALLBACK_MODEL3 = "deepseek-r1-distill-llama-70b" #High reasoning and math
 
 GENERATION_TOP_K = 10
 

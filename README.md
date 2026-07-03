@@ -12,10 +12,10 @@ pinned: false
 
 Upload one or more PDFs and ask questions about them. Built with:
 
-- **Ingestion:** PyMuPDF (text) + Camelot (tables)
+- **Ingestion:** Markitdown + Camelot (tables)
 - **Retrieval:** Hybrid search — ChromaDB (dense/semantic) + BM25 (sparse/keyword),
   combined via weighted Reciprocal Rank Fusion
-- **Generation:** Conversational, history-aware query rewriting + LLM answer generation
+- **Generation:** Conversational, history-aware query rewriting + LLM answer generation with reasoning when needed
 - **Interface:** Streamlit
 
 Everything is processed in-memory per session — nothing is persisted once the
@@ -29,9 +29,9 @@ session ends.
 
 ## Required environment variables
 
-See `.env.example`. You'll need:
-- `HF_TOKEN` - Hugging Face access token (read scope is sufficient)
-- `GEMINI_API_KEY` - Gemini API key if using Gemini model.
+See `.env.example` and replace it with .env where you'll need:
+- `HF_TOKEN`: Create a READ scope HF token from your Huggingface account.
+- `GROQ_API_KEY`: Create a new API token from https://console.groq.com/keys
 
 ## 🌐 Live Demo
 👉 https://huggingface.co/spaces/saikat007/ShikkhaBondhu
