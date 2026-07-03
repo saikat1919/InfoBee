@@ -22,7 +22,7 @@ from session_ingestion.markdown_cleaning import (
 )
 
 
-_markitdown = MarkItDown(enable_plugins=False)
+_markitdown = MarkItDown()
 
 
 _markdown_splitter = MarkdownTextSplitter(
