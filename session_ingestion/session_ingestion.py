@@ -123,7 +123,7 @@ def process_uploaded_pdf(uploaded_file):
         )
 
     tmp_dir = tempfile.gettempdir()
-    tmp_path = os.path.join(tmp_dir, f"askme_{uuid.uuid4().hex}.pdf")
+    tmp_path = os.path.join(tmp_dir, f"infobee_{uuid.uuid4().hex}.pdf")
     page_paths = []
 
     try:

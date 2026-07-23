@@ -7,7 +7,6 @@ from langchain_groq import ChatGroq
 from dotenv import load_dotenv
 
 from configs import GROQ_PRIMARY_MODEL_NAME, GROQ_FALLBACK_MODEL1, GROQ_FALLBACK_MODEL2
-from session_query_routing.intent_classification import classify_intent, QueryIntent
 
 load_dotenv()
 
@@ -25,40 +24,20 @@ contextualize_prompt = ChatPromptTemplate.from_messages([
     ("user", "{input}"),
 ])
 
-FACTUAL_SYSTEM_PROMPT = """
-You are AskMe, a question-answering assistant that answers strictly using the provided context. Follow these rules:
-1. Only use information present in the context. Do not use outside knowledge.
+ANSWER_SYSTEM_PROMPT = """
+You are InfoBee, a question-answering assistant that answers strictly using the provided context. Follow these rules:
+1. Only use information present in the context. Do not use outside knowledge, and never add explanations, background, or reasoning that is not stated in the context.
 2. If the context does not contain enough information to answer the question, say so explicitly instead of guessing.
 3. Be concise and direct. Do not repeat the question back.
-4. If multiple people appear in the context, only use facts explicitly tied to the person named in the question. Never merge or borrow details from a different person's excerpt, even if the excerpts look similar.
+4. If multiple people or sources appear in the context, only use facts explicitly tied to the entity named in the question. Never merge or borrow details from a different excerpt, even if the excerpts look similar.
 5. You may use the chat history to understand what the user is referring to and to avoid repeating yourself, but the FACTS in your answer must still come only from the context below.
 
 Context:
 {context}
 """
 
-EXPLAIN_SYSTEM_PROMPT = """
-You are ShikkhaBondhu, a question-answering assistant helping the user(students) understand material from their uploaded document(s). The user is asking for an EXPLANATION, not just a fact lookup. Follow these rules:
-1. Start from the retrieved context below -- quote or paraphrase the specific passage, equation, or statement the user is asking about, so they can see exactly what you're explaining.
-2. If the context itself contains the explanation, use it.
-3. If the context does NOT fully explain the "why" or "how", you MAY use your own general knowledge to fill in the reasoning -- but you MUST clearly separate this from the document content. Use a sentence like "The document doesn't explain this directly, but here's why this is generally true:" before adding outside reasoning.
-4. Never silently blend outside knowledge into what looks like document content. The user must always be able to tell what came from their document versus what you added.
-5. If multiple people or sources appear in the context, only use facts explicitly tied to the entity named in the question. Never merge or borrow details across different excerpts, even if they look similar.
-6. Be clear and pedagogical, but don't pad the answer -- get to the explanation.
-7. You may use the chat history to understand what the user is referring to.
-
-Context:
-{context}
-"""
-
 answer_prompt = ChatPromptTemplate.from_messages([
-    ("system", FACTUAL_SYSTEM_PROMPT),
-    MessagesPlaceholder("chat_history"),
-    ("human", "{input}"),
-])
-
-explain_prompt = ChatPromptTemplate.from_messages([
-    ("system", EXPLAIN_SYSTEM_PROMPT),
+    ("system", ANSWER_SYSTEM_PROMPT),
     MessagesPlaceholder("chat_history"),
     ("human", "{input}"),
 ])
@@ -122,20 +101,11 @@ def build_rag_chain(retriever):
         model, retriever, contextualize_prompt
     )
 
-    factual_chain = create_stuff_documents_chain(model, answer_prompt)
-    explain_chain = create_stuff_documents_chain(model, explain_prompt)
+    answer_chain = create_stuff_documents_chain(model, answer_prompt)
 
-    factual_rag_chain = create_retrieval_chain(history_aware_retriever, factual_chain)
-    explain_rag_chain = create_retrieval_chain(history_aware_retriever, explain_chain)
-
-    return {
-        QueryIntent.FACTUAL: factual_rag_chain,
-        QueryIntent.EXPLAIN: explain_rag_chain,
-    }
+    return create_retrieval_chain(history_aware_retriever, answer_chain)
 
 
-def answer_question(rag_chains, query, chat_history):
-    intent = classify_intent(query)
-    chain = rag_chains[intent]
-    result = chain.invoke({"input": query, "chat_history": chat_history})
-    return result["answer"], intent
+def answer_question(rag_chain, query, chat_history):
+    result = rag_chain.invoke({"input": query, "chat_history": chat_history})
+    return result["answer"]
