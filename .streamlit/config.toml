@@ -1,4 +1,4 @@
+# The local file watcher crashes when it introspects torch.classes (pulled in by
+# sentence-transformers), so it stays off.
 [server]
-enableXsrfProtection = false
-enableCORS = false
 fileWatcherType = "none"

@@ -3,15 +3,17 @@ load_dotenv()
 
 import os
 import streamlit as st
+from streamlit.errors import StreamlitSecretNotFoundError
 
-if "GROQ_API_KEY" in st.secrets:
-    os.environ["GROQ_API_KEY"] = st.secrets["GROQ_API_KEY"]
-
-if "HF_TOKEN" in st.secrets:
-    os.environ["HF_TOKEN"] = st.secrets["HF_TOKEN"]
-
-if "GEMINI_API_KEY" in st.secrets:
-    os.environ["GEMINI_API_KEY"] = st.secrets["GEMINI_API_KEY"]
+# Streamlit Cloud supplies keys via st.secrets. Locally there is no secrets.toml
+# and st.secrets raises rather than coming back empty, so fall through to the
+# env vars already loaded from .env above.
+try:
+    for _key in ("GROQ_API_KEY", "HF_TOKEN"):
+        if _key in st.secrets:
+            os.environ[_key] = st.secrets[_key]
+except StreamlitSecretNotFoundError:
+    pass
 
 
 from langchain_core.messages import HumanMessage, AIMessage
